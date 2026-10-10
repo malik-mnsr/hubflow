@@ -1,0 +1,120 @@
+<div class="scan-container">
+  <header class="scan-header">
+    <h1>Poste Operateur <span>• Station de Scan Douchette</span></h1>
+    <p>Saisissez ou scannez un colis pour acheminement automatique</p>
+  </header>
+
+  <div class="scan-layout">
+    <!-- Formulaire de Saisie -->
+    <div class="scan-card form-card">
+      <h2>Nouveau Scan</h2>
+
+      <form (ngSubmit)="soumettreScan()">
+        <div class="form-group">
+          <label for="tracking">Numéro de Tracking *</label>
+          <input 
+            type="text" 
+            id="tracking" 
+            [(ngModel)]="trackingInput" 
+            name="tracking" 
+            placeholder="Ex: HUB-75001-9988" 
+            required 
+            autofocus 
+          />
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cp">Code Postal</label>
+            <input 
+              type="text" 
+              id="cp" 
+              [(ngModel)]="codePostalInput" 
+              name="codePostal" 
+              placeholder="Ex: 75001" 
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="pays">Code Pays</label>
+            <input 
+              type="text" 
+              id="pays" 
+              [(ngModel)]="codePaysInput" 
+              name="codePays" 
+              placeholder="FR" 
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="poids">Poids (kg)</label>
+          <input 
+            type="number" 
+            step="0.1" 
+            id="poids" 
+            [(ngModel)]="poidsInput" 
+            name="poids" 
+            placeholder="Ex: 2.5" 
+          />
+        </div>
+
+        <!-- 👈 Checkbox pour l'état du colis -->
+        <div class="form-group checkbox-group">
+          <label class="checkbox-label">
+            <input 
+              type="checkbox" 
+              [(ngModel)]="estEndommageInput" 
+              name="estEndommage" 
+            />
+            <span>Colis endommagé / abîmé (Déclenche un rejet)</span>
+          </label>
+        </div>
+
+        <button type="submit" class="btn-scan" [disabled]="chargement || !trackingInput.trim()">
+          {{ chargement ? 'Traitement...' : 'VALIDER SCAN' }}
+        </button>
+
+        <p *ngIf="erreurMessage" class="error-banner">{{ erreurMessage }}</p>
+      </form>
+    </div>
+
+    <!-- Résultat Direct & Historique -->
+    <div class="scan-card result-card">
+      <h2>Résultat du Scan</h2>
+
+      <div *ngIf="!dernierScan" class="empty-result">
+        En attente d'un premier scan...
+      </div>
+
+      <div *ngIf="dernierScan" class="result-box" [class.result-rejet]="dernierScan.estRejet">
+        <div class="result-status">
+          <span class="status-tag" [class.tag-rejet]="dernierScan.estRejet">
+            {{ dernierScan.estRejet ? 'REJET / ANOMALIE' : 'AFFECTATION RÉUSSIE' }}
+          </span>
+          <span class="result-time">{{ dernierScan.timestamp | date:'HH:mm:ss' }}</span>
+        </div>
+
+        <div class="destination-display">
+          <span class="label">Zone de Destination :</span>
+          <h3 class="zone-code">{{ dernierScan.zoneDestination }}</h3>
+        </div>
+
+        <p *ngIf="dernierScan.motifRejet" class="rejet-reason">
+          <strong>Motif :</strong> {{ dernierScan.motifRejet }}
+        </p>
+
+        <p class="tracking-ref">Tracking : <span>{{ dernierScan.trackingNumber }}</span></p>
+      </div>
+
+      <!-- Historique de la session -->
+      <h3 class="history-title" *ngIf="historiqueScans.length > 0">Derniers Scans de la session</h3>
+      <ul class="history-list">
+        <li *ngFor="let s of historiqueScans.slice(0, 5)" [class.item-rejet]="s.estRejet">
+          <span class="history-track">{{ s.trackingNumber }}</span>
+          <span class="history-zone">{{ s.zoneDestination }}</span>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,102 @@
+<div class="dashboard-container">
+  
+  <header class="dashboard-header">
+    <div class="header-title">
+      <h1>HubFlow WMS <span>• Dashboard National</span></h1>
+      <p>Supervision en temps réel des 17 zones de tri logistique</p>
+    </div>
+    
+    <div class="kpi-group">
+      <div class="kpi-card">
+        <span class="kpi-value">{{ totalColisTraites }}</span>
+        <span class="kpi-label">Colis Traités</span>
+      </div>
+      <div class="kpi-card kpi-rejet">
+        <span class="kpi-value">{{ totalRejets }}</span>
+        <span class="kpi-label">Anomalies / Rejets</span>
+      </div>
+    </div>
+  </header>
+
+  <section class="zones-grid">
+    <div 
+      *ngFor="let zone of zones" 
+      class="zone-card"
+      [class.card-alerte]="zone.estAlerte"
+      [class.card-special]="zone.estSpecial"
+      (click)="selectionnerZone(zone)"
+    >
+      <div class="card-header">
+        <span class="hub-code">{{ zone.codeHub }}</span>
+        <span class="status-indicator"></span>
+      </div>
+      
+      <div class="card-body">
+        <h3>{{ zone.libelle }}</h3>
+        <p class="zone-code-sub">{{ zone.code }}</p>
+      </div>
+
+      <div class="card-footer">
+        <span class="colis-count">{{ zone.totalColis }}</span>
+        <span class="colis-unit">colis</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modal Détail d'une zone -->
+  <div class="modal-overlay" *ngIf="selectedZone" (click)="fermerModal()">
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header" [class.header-rejet]="selectedZone.estAlerte">
+        <h2><span>{{ selectedZone.codeHub }}</span> - {{ selectedZone.libelle }}</h2>
+        <button class="btn-close" (click)="fermerModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Loader affiché pendant la requête HTTP -->
+        <div *ngIf="loadingColis" class="loading-state">
+          <p>Chargement des colis en cours...</p>
+        </div>
+
+        <!-- Contenu affiché une fois le chargement terminé -->
+        <ng-container *ngIf="!loadingColis">
+          <div *ngIf="colisZoneSelectionnee.length === 0" class="empty-state">
+            Aucun colis présent dans cette zone.
+          </div>
+
+          <table *ngIf="colisZoneSelectionnee.length > 0" class="colis-table">
+            <thead>
+              <tr>
+                <th>Tracking ID</th>
+                <th>Code Postal</th>
+                <th>Pays</th>
+                <th>Poids (kg)</th>
+                <th>Statut</th>
+                <th>Motif / Remarque</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let c of colisZoneSelectionnee">
+                <td class="tracking-code">{{ c.trackingNumber }}</td>
+                <td>{{ c.codePostalDestinataire || '-' }}</td>
+                <td>{{ c.codePays }}</td>
+                <td>{{ c.poidsKg ? c.poidsKg + ' kg' : '-' }}</td>
+                <td>
+                  <span 
+                    class="badge" 
+                    [class.badge-rejet]="c.statut === 'EN_REJET' || c.zoneDestination === 'ZONE_99_REJET' || c.estEndommage"
+                  >
+                    {{ c.estEndommage ? 'ENDOMMAGÉ' : c.statut }}
+                  </span>
+                </td>
+                <td class="reason-cell">
+                  {{ c.motifRejet || (c.estEndommage ? 'Colis abîmé' : '-') }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+
+</div>
